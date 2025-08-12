@@ -14,12 +14,11 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import openpyxl  # нужен для чтения .xlsx (pandas использует как движок)
 
-
 # =========================
 # Пути и базовые проверки
 # =========================
-XLS_PATH = "data/point.xlsx"    # Файл с метками (.xlsx)
-IMG_DIR = "data/Images"         # Папка с изображениями
+XLS_PATH = "data/point.xlsx"  # Файл с метками (.xlsx)
+IMG_DIR = "data/Images"  # Папка с изображениями
 
 if not os.path.exists(XLS_PATH):
     raise FileNotFoundError(f"❌ Файл с метками не найден: {XLS_PATH}")
@@ -40,8 +39,8 @@ def set_seed(seed: int = 42):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-set_seed(42)
 
+set_seed(42)
 
 # =========================
 # Трансформации
@@ -49,6 +48,7 @@ set_seed(42)
 # Попробуем взять нормализацию из весов модели; если не получится — используем ImageNet-стандарт
 try:
     from torchvision.models import ResNet18_Weights
+
     weights = ResNet18_Weights.DEFAULT
     imagenet_mean = weights.meta["mean"]
     imagenet_std = weights.meta["std"]
@@ -167,11 +167,13 @@ images, labels = next(iter(_preview_loader))
 print(f"📌 Форма тензора изображений: {images.shape}")  # [4, 3, 512, 512]
 print(f"📌 Метки: {labels.tolist()}")
 
+
 # Де-нормализация для показа
 def denormalize(tensor, mean, std):
     mean = torch.tensor(mean).view(1, 3, 1, 1)
     std = torch.tensor(std).view(1, 3, 1, 1)
     return tensor * std + mean
+
 
 fig, axes = plt.subplots(1, 4, figsize=(16, 4))
 class_names = {0: "Нет грыжи", 1: "Есть грыжа"}
@@ -185,7 +187,6 @@ for i in range(min(4, images.size(0))):
 
 plt.tight_layout()
 plt.show()
-
 
 # =========================
 # Разделение на train/val и DataLoader'ы
@@ -202,6 +203,7 @@ indices = list(range(len(full_dataset)))
 random.shuffle(indices)
 train_indices = indices[:train_size]
 val_indices = indices[train_size:]
+
 
 # Вспомогательная "обёртка" над базовым датасетом с другим transform
 class WrappedDataset(Dataset):
@@ -240,6 +242,7 @@ class WrappedDataset(Dataset):
 
         return image, torch.tensor(label, dtype=torch.long)
 
+
 train_dataset = WrappedDataset(full_dataset, train_indices, transform_train)
 val_dataset = WrappedDataset(full_dataset, val_indices, transform_val)
 
@@ -271,6 +274,7 @@ def build_model(num_classes=2):
     model.fc = nn.Linear(num_features, num_classes)
     return model
 
+
 model = build_model(num_classes=2).to(device)
 
 criterion = nn.CrossEntropyLoss()
@@ -285,7 +289,7 @@ def train_model(model, criterion, optimizer, train_loader, val_loader, device, n
     best_acc = 0.0
 
     for epoch in range(num_epochs):
-        print(f"\nEpoch {epoch+1}/{num_epochs}")
+        print(f"\nEpoch {epoch + 1}/{num_epochs}")
         epoch_start = time.time()
 
         for phase, loader in [('train', train_loader), ('val', val_loader)]:
@@ -331,6 +335,7 @@ def train_model(model, criterion, optimizer, train_loader, val_loader, device, n
     print(f"\n🏆 Лучшая val Acc: {best_acc:.4f}")
     model.load_state_dict(best_wts)
     return model
+
 
 model = train_model(model, criterion, optimizer, train_loader, val_loader, device, num_epochs=10)
 
